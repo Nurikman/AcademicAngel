@@ -111,7 +111,7 @@ def get_advice(pred_gpa: float, contrib_df: pd.DataFrame) -> str:
     """
     Generate personalized study advice using OpenAI ChatCompletion API.
     """
-    os.environ["OPENAI_API_KEY"] = "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"
+    os.environ["OPENAI_API_KEY"] = user_api_key
     openai_client = OpenAI()
     openai_client.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -190,8 +190,9 @@ def main():
             options={"None": 0, "Low": 1, "Moderate": 2, "High": 3, "Very High": 4}
         )
 
+        user_api_key = st.text_input("Enter your OpenAI API key:", type="password")
         submitted = st.form_submit_button("Predict & Advise")
-
+        
         if submitted:
             # map dropdown/radio selections to numeric codes
             gender_map = {"Male": 0, "Female": 1}
