@@ -27,6 +27,8 @@ from openai import OpenAI
 
 from typing import Tuple, Dict
 
+user_api_key = st.text_input("Enter your OpenAI API key:", type="password")
+
 @st.cache_data
 def load_data(path: str) -> Tuple[pd.DataFrame, pd.Series]:
     """
@@ -187,7 +189,6 @@ def main():
             options={"None": 0, "Low": 1, "Moderate": 2, "High": 3, "Very High": 4}
         )
 
-        user_api_key = st.text_input("Enter your OpenAI API key:", type="password")
         submitted = st.form_submit_button("Predict & Advise")
         
         if submitted:
