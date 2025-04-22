@@ -111,9 +111,7 @@ def get_advice(pred_gpa: float, contrib_df: pd.DataFrame) -> str:
     """
     Generate personalized study advice using OpenAI ChatCompletion API.
     """
-    openai_client = OpenAI()
-    openai_client.api_key = user_api_key
-
+    openai_client = OpenAI(api_key=user_api_key)
 
     table_md = contrib_df.to_markdown(index=False)
 
