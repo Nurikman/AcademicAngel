@@ -2,13 +2,6 @@
 # Streamlit application for student GPA prediction, SHAP explanation, and AI-driven study advice
 
 """
-Installation:
-    pip install streamlit xgboost shap openai pandas matplotlib
-
-Set environment variable:
-    export OPENAI_API_KEY="your_openai_api_key"
-    (Windows PowerShell: setx OPENAI_API_KEY "your_openai_api_key")
-
 Run:
     streamlit run app.py
 """
@@ -27,7 +20,6 @@ from openai import OpenAI
 
 from typing import Tuple, Dict
 
-user_api_key = st.text_input("Enter your OpenAI API key:", type="password")
 
 @st.cache_data
 def load_data(path: str) -> Tuple[pd.DataFrame, pd.Series]:
@@ -109,11 +101,26 @@ def predict_and_explain(
 
     return pred_gpa, contrib, expl_sub
 
+def check_api_key(my_api_key):
+    client = openai.OpenAI(api_key=my_api_key)
+    try:
+        client.models.list()
+    except openai.AuthenticationError:
+        return False
+    else:
+        openai_client = OpenAI()
+        openai_client.api_key = my_api_key
+        st.session_state.openai_client = openai_client
+        return True
+    
+
 def get_advice(pred_gpa: float, contrib_df: pd.DataFrame) -> str:
+
+    openai_client = st.session_state.get("openai_client", None)
+
     """
     Generate personalized study advice using OpenAI ChatCompletion API.
     """
-    openai_client = OpenAI(api_key=user_api_key)
 
     table_md = contrib_df.to_markdown(index=False)
 
@@ -155,6 +162,30 @@ def main():
         "Fill out the form below to predict your GPA, see what factors help or hurt your score, and get personalized advice!"
     )
 
+    key_file = st.file_uploader("Upload a txt file that contains ONLY your openai API key (do not add anything like quotaion marks)", type=["txt"])
+
+    if st.button("Check key"):
+        try:
+            # Read API key from the file
+            key = key_file.read().decode('utf-8').strip() 
+
+            # Check if the key is empty
+            if not key:
+                st.error("API key is empty.")
+            else:
+                # Set the API key as an environment variable
+                os.environ["OPENAI_API_KEY"] = key
+                OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+                
+                # Validate the API key
+                if check_api_key(OPENAI_API_KEY):
+                    st.success("API key is valid!")
+
+                else:
+                    st.error("Invalid API key. Please check your key.")
+        
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
     # Load and train
     X, y = load_data('Student_performance_data.txt')
     model = train_model(X, y)
@@ -190,7 +221,7 @@ def main():
         )
 
         submitted = st.form_submit_button("Predict & Advise")
-        
+
         if submitted:
             # map dropdown/radio selections to numeric codes
             gender_map = {"Male": 0, "Female": 1}
